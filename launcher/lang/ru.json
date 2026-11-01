@@ -461,5 +461,9 @@
   "Use an access token…": "Использовать токен доступа…",
   "Make an invitation": "Создать приглашение",
   "One invitation per friend. With an email Tailscale sends it; without, send them the link. They accept it in their own Tailscale account.": "Одно приглашение на друга. Если указать email, Tailscale отправит его сам; иначе отправьте ссылку вручную. Друг принимает его в своём аккаунте Tailscale.",
-  "Forget the access token": "Забыть токен доступа"
+  "Forget the access token": "Забыть токен доступа",
+  "Horizon-Fabric": "Horizon-Fabric",
+  "Horizon-Fabric 26.3": "Horizon-Fabric 26.3",
+  "Horizon's Rust engine with Fabric mods. Experimental.": "Rust-движок Horizon с модами Fabric. Экспериментально.",
+  "Pinned to Minecraft 26.3 with Fabric Loader. No version selection needed.": "Закреплено на Minecraft 26.3 с Fabric Loader. Выбор версии не требуется."
 }

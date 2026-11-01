@@ -143,6 +143,9 @@ pub struct Meta {
     /// launcher's own version, which follows updates.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
+    /// Fabric accelerator settings (Horizon-Fabric instances only).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub accel: Option<AccelSettings>,
     /// Seconds played in it, every run started by the launcher (the window or `play`) added up.
     #[serde(default, skip_serializing_if = "is_zero")]
     pub played_secs: u64,
@@ -155,6 +158,30 @@ pub struct Meta {
     /// Set for a Minecraft: Java Edition instance: it plays the real game, not Horizon.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub java: Option<JavaGame>,
+}
+
+/// Settings for the Fabric accelerator (Horizon-Fabric instances).
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AccelSettings {
+    /// Whether the accelerator is enabled (default: true for Horizon-Fabric instances).
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Module toggles: module_id -> enabled.
+    #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
+    pub modules: std::collections::HashMap<String, bool>,
+    /// Pinned accelerator version (e.g., "0.1.0"). None: use launcher's bundled version.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pinned_version: Option<String>,
+    /// JVM memory limit in MiB for the accelerator's JVM (if separate).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jvm_memory_mb: Option<u32>,
+    /// Extra JVM arguments for the accelerator's JVM.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub jvm_args: String,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 /// A Minecraft: Java Edition instance: the real game of one version, with the Java it runs on
@@ -178,6 +205,9 @@ pub struct JavaGame {
     /// The game window's size, width then height; none: the game's own 854×480.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub window: Option<(u32, u32)>,
+    /// Horizon Fabric Accelerator settings (only for Horizon-Fabric instances).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub accel: Option<AccelSettings>,
 }
 
 impl Instance {

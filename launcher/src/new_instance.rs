@@ -16,6 +16,7 @@ const ROWS: usize = 60;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum NewKind {
     Horizon,
+    HorizonFabric,
     Vanilla,
     Modded,
 }
@@ -82,7 +83,7 @@ impl Launcher {
             VersionList::Ready(v) => Some(v),
             _ => None,
         };
-        (j.kind != NewKind::Horizon)
+        (j.kind != NewKind::Horizon && j.kind != NewKind::HorizonFabric)
             .then(|| j.minecraft(versions))
             .flatten()
             .map(|mc| j.default_name(&mc))
@@ -103,9 +104,10 @@ impl Launcher {
     }
 
     /// Picks the dialog's kind; a Java one fetches Mojang's list the first time.
+    /// Horizon and HorizonFabric don't need the version list (Horizon is 26.3 only, HorizonFabric is 26.3+Fabric).
     pub(super) fn pick_kind(&mut self, kind: NewKind, cx: &mut Context<Self>) {
         self.change(|j| j.kind = kind);
-        if kind == NewKind::Horizon || !matches!(self.instances.versions, VersionList::NotAsked) {
+        if kind == NewKind::Horizon || kind == NewKind::HorizonFabric || !matches!(self.instances.versions, VersionList::NotAsked) {
             return;
         }
         self.instances.versions = VersionList::Loading;
@@ -130,13 +132,14 @@ impl Launcher {
         .detach();
     }
 
-    /// The tabs over a new instance's dialog: Horizon, Vanilla, Modded.
+    /// The tabs over a new instance's dialog: Horizon, Horizon-Fabric, Vanilla, Modded.
     pub(super) fn kind_tabs(&self, cx: &mut Context<Self>) -> Div {
         let t = self.theme;
         let now = self.instances.dialog.as_ref().map(|d| d.java.kind);
         div().flex().gap(px(4.)).children(
             [
                 (NewKind::Horizon, "Horizon"),
+                (NewKind::HorizonFabric, "Horizon-Fabric"),
                 (NewKind::Vanilla, "Vanilla"),
                 (NewKind::Modded, "Modded"),
             ]
@@ -174,6 +177,37 @@ impl Launcher {
                 .px(px(10.))
                 .child(shell::label(tr(label).to_string()))
         };
+
+        // HorizonFabric is pinned to 26.3 with Fabric, no version/loader selection needed
+        if choice.kind == NewKind::HorizonFabric {
+            return div()
+                .flex()
+                .flex_col()
+                .gap(px(10.))
+                .child(heading("Minecraft version"))
+                .child(
+                    shell::action("mc-fabric-26.3", Action::Raised, &t)
+                        .h(px(48.))
+                        .w(px(180.))
+                        .justify_start()
+                        .gap(px(10.))
+                        .child(shell::label("Fabric"))
+                        .child(
+                            div()
+                                .flex()
+                                .flex_col()
+                                .child(tr("Horizon-Fabric 26.3"))
+                                .child(shell::text(night::CAPTION, c(n.muted)).child(
+                                    tr("Horizon's Rust engine with Fabric mods. Experimental."),
+                                )),
+                        )
+                )
+                .child(
+                    shell::text(night::CAPTION, c(n.muted))
+                        .child(tr("Pinned to Minecraft 26.3 with Fabric Loader. No version selection needed."))
+                );
+        }
+
         let search = self
             .servers
             .value(Field::InstanceVersion)
@@ -328,9 +362,14 @@ pub(super) fn create_java(
     name: &str,
     minecraft: &str,
 ) -> Result<instances::Instance, String> {
-    let loader = (choice.kind == NewKind::Modded)
-        .then(|| loaders::choose(choice.loader.id(), minecraft, None))
-        .transpose()?;
+    let loader = match choice.kind {
+            NewKind::Modded => loaders::choose(choice.loader.id(), minecraft, None).map(Some)?,
+            NewKind::HorizonFabric => {
+                // HorizonFabric is pinned to 26.3 with Fabric loader
+                loaders::choose("fabric", "26.3", None).map(Some)?
+            }
+            _ => None,
+        };
     let made = instances::create_java(name, minecraft)?;
     match loader {
         Some(loader) => instances::edit(&made.id, |m| {

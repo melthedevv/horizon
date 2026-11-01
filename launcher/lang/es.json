@@ -461,5 +461,11 @@
   "Use an access token…": "Usar un token de acceso…",
   "Make an invitation": "Crear una invitación",
   "One invitation per friend. With an email Tailscale sends it; without, send them the link. They accept it in their own Tailscale account.": "Una invitación por amigo. Con correo, Tailscale la envía; sin él, envíales el enlace. La aceptan en su propia cuenta de Tailscale.",
-  "Forget the access token": "Olvidar el token de acceso"
+  "Forget the access token": "Olvidar el token de acceso",
+  "Horizon-Fabric": "Horizon-Fabric",
+  "Horizon-Fabric 26.3": "Horizon-Fabric 26.3",
+  "Horizon's Rust engine with Fabric mods. Experimental.": "El motor Rust de Horizon con mods de Fabric. Experimental.",
+  "Pinned to Minecraft 26.3 with Fabric Loader. No version selection needed.": "Fijado a Minecraft 26.3 con Fabric Loader. No se necesita selección de versión.",
+  "Horizon's Rust engine with Fabric mods. Experimental.": "El motor Rust de Horizon con mods de Fabric. Experimental.",
+  "Pinned to Minecraft 26.3 with Fabric Loader. No version selection needed.": "Fijado a Minecraft 26.3 con Fabric Loader. No se necesita selección de versión."
 }

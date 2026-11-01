@@ -461,5 +461,9 @@
   "Use an access token…": "使用访问令牌…",
   "Make an invitation": "生成邀请",
   "One invitation per friend. With an email Tailscale sends it; without, send them the link. They accept it in their own Tailscale account.": "每位好友对应一个邀请。填写邮箱后由 Tailscale 发送；不填则将链接发给对方。好友在自己的 Tailscale 账号中接受邀请。",
-  "Forget the access token": "忘记访问令牌"
+  "Forget the access token": "忘记访问令牌",
+  "Horizon-Fabric": "Horizon-Fabric",
+  "Horizon-Fabric 26.3": "Horizon-Fabric 26.3",
+  "Horizon's Rust engine with Fabric mods. Experimental.": "Horizon的Rust引擎搭配Fabric模组。实验性。",
+  "Pinned to Minecraft 26.3 with Fabric Loader. No version selection needed.": "固定至Minecraft 26.3与Fabric Loader。无需选择版本。"
 }

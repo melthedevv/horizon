@@ -1,0 +1,24 @@
+{
+  "required": true,
+  "package": "dev.horizonlab.accel.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "horizon-accel.refmap.json",
+  "mixins": [
+    "RegionFileMixin",
+    "ChunkSerializerMixin",
+    "NbtIoMixin"
+  ],
+  "client": [
+    "RegionFileMixin",
+    "ChunkSerializerMixin",
+    "NbtIoMixin"
+  ],
+  "server": [
+    "RegionFileMixin",
+    "ChunkSerializerMixin",
+    "NbtIoMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

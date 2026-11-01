@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "name": "horizon-accel",
+  "version": "0.1.0",
+  "min_protocol_version": 1,
+  "max_protocol_version": 1,
+  "modules": [
+    {
+      "id": "chunk_io",
+      "name": "Chunk & Region I/O",
+      "description": "Accelerated chunk loading/saving, NBT parsing, and paletted container operations",
+      "enabled_by_default": true,
+      "feature_flag": "chunk_io",
+      "supersedes_classes": [
+        {
+          "class": "net.minecraft.world.chunk.Chunk",
+          "reason": "Rust implementation of chunk storage and serialization",
+          "soft": false
+        },
+        {
+          "class": "net.minecraft.world.chunk.storage.RegionFile",
+          "reason": "Rust region file I/O with async support",
+          "soft": false
+        },
+        {
+          "class": "net.minecraft.nbt.NbtIo",
+          "reason": "Fast NBT parsing in Rust",
+          "soft": false
+        },
+        {
+          "class": "net.minecraft.world.chunk.PalettedContainer",
+          "reason": "Rust paletted container with zero-copy access",
+          "soft": false
+        }
+      ],
+      "supersedes_methods": [],
+      "supersedes_fields": [],
+      "min_minecraft_version": "26.3",
+      "config": {}
+    },
+    {
+      "id": "worldgen",
+      "name": "World Generation",
+      "description": "Noise sampling, surface rules, and structure placement in Rust",
+      "enabled_by_default": false,
+      "feature_flag": "worldgen",
+      "supersedes_classes": [
+        {
+          "class": "net.minecraft.world.gen.noise.NoiseSampler",
+          "reason": "Rust noise functions matching vanilla exactly",
+          "soft": false
+        },
+        {
+          "class": "net.minecraft.world.gen.surfacebuilder.SurfaceRule",
+          "reason": "Rust surface rule evaluation",
+          "soft": false
+        },
+        {
+          "class": "net.minecraft.world.gen.structure.Structure",
+          "reason": "Rust structure placement",
+          "soft": false
+        }
+      ],
+      "supersedes_methods": [],
+      "supersedes_fields": [],
+      "min_minecraft_version": "26.3",
+      "config": {}
+    },
+    {
+      "id": "lighting",
+      "name": "Lighting Engine",
+      "description": "Sky and block light propagation in Rust",
+      "enabled_by_default": false,
+      "feature_flag": "lighting",
+      "supersedes_classes": [
+        {
+          "class": "net.minecraft.world.level.lighting.LightEngine",
+          "reason": "Rust light propagation with identical results",
+          "soft": false
+        }
+      ],
+      "supersedes_methods": [],
+      "supersedes_fields": [],
+      "min_minecraft_version": "26.3",
+      "config": {}
+    },
+    {
+      "id": "collision",
+      "name": "Collision & Voxel Shapes",
+      "description": "Block collision detection and voxel shape queries in Rust",
+      "enabled_by_default": false,
+      "feature_flag": "collision",
+      "supersedes_classes": [
+        {
+          "class": "net.minecraft.world.phys.shapes.VoxelShape",
+          "reason": "Rust voxel shape operations",
+          "soft": false
+        },
+        {
+          "class": "net.minecraft.world.phys.shapes.Shapes",
+          "reason": "Rust shape combination and querying",
+          "soft": false
+        }
+      ],
+      "supersedes_methods": [],
+      "supersedes_fields": [],
+      "min_minecraft_version": "26.3",
+      "config": {}
+    },
+    {
+      "id": "meshing",
+      "name": "Section Meshing",
+      "description": "Chunk section mesh generation producing vertex data for Java renderer",
+      "enabled_by_default": false,
+      "feature_flag": "meshing",
+      "supersedes_classes": [
+        {
+          "class": "net.minecraft.client.renderer.chunk.RenderChunk",
+          "reason": "Rust meshing producing identical vertex buffers",
+          "soft": false
+        }
+      ],
+      "supersedes_methods": [],
+      "supersedes_fields": [],
+      "min_minecraft_version": "26.3",
+      "config": {}
+    },
+    {
+      "id": "pathfinding",
+      "name": "Pathfinding & Mob AI",
+      "description": "A* pathfinding and mob goal execution in Rust",
+      "enabled_by_default": false,
+      "feature_flag": "pathfinding",
+      "supersedes_classes": [
+        {
+          "class": "net.minecraft.world.entity.ai.navigation.PathNavigation",
+          "reason": "Rust pathfinding with identical results",
+          "soft": false
+        },
+        {
+          "class": "net.minecraft.world.entity.ai.goal.Goal",
+          "reason": "Rust goal execution",
+          "soft": false
+        }
+      ],
+      "supersedes_methods": [],
+      "supersedes_fields": [],
+      "min_minecraft_version": "26.3",
+      "config": {}
+    }
+  ],
+  "fallback": {
+    "auto_fallback_on_conflict": true,
+    "auto_fallback_on_error": true,
+    "notify_player": true,
+    "log_level": "warn"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "horizon-accel",
+  "version": "${version}",
+  "name": "Horizon Accelerator",
+  "description": "Horizon's Rust accelerator modules for Fabric. Provides high-performance replacements for vanilla subsystems (chunk I/O, worldgen, lighting, collision, meshing, pathfinding) with automatic conflict detection and fallback.",
+  "authors": ["Horizon"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.horizonlab.accel.HorizonAccelMod"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "26.3",
+    "fabric-api": "*"
+  },
+  "custom": {
+    "horizon-accel": {
+      "protocol_version": 1,
+      "native_library": "horizon_accel",
+      "manifest_resource": "accel-manifest.json"
+    }
+  }
+}

@@ -218,9 +218,12 @@ enum InstanceCmd {
         /// The instance to copy (its name or id)
         #[arg(long)]
         copy: Option<String>,
+        /// Kind of instance: horizon (default), horizon-fabric, vanilla, fabric, quilt
+        #[arg(long, value_name = "KIND")]
+        kind: Option<String>,
         /// Make a Minecraft: Java Edition instance of this version (1.21.4, latest or
         /// latest-snapshot) instead of a Horizon one
-        #[arg(long, conflicts_with = "copy")]
+        #[arg(long, conflicts_with = "copy", conflicts_with = "kind")]
         minecraft: Option<String>,
         /// With this mod loader: fabric or quilt
         #[arg(long, requires = "minecraft")]
@@ -2556,6 +2559,80 @@ fn after_exit(instance: &instances::Instance, vars: &[(&'static str, std::ffi::O
     }
 }
 
+/// Install horizon-accel mod into a Horizon-Fabric instance.
+fn install_horizon_accel(instance_id: &str) -> Result<(), String> {
+    use std::fs;
+    use std::path::Path;
+    use std::collections::HashMap;
+
+    // Find the instance's game folder
+    let game_home = backend::game_home();
+    let instance_dir = game_home.join("instances").join(instance_id);
+    let mods_dir = instance_dir.join("mods");
+    fs::create_dir_all(&mods_dir).map_err(|e| format!("Failed to create mods dir: {e}"))?;
+
+    // Copy horizon-accel.jar from the built artifacts
+    // The jar is built at .local/fabric-mods/horizon-accel-0.1.0.jar relative to workspace root
+    let workspace_root = std::env::var("CARGO_MANIFEST_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("."))
+        .parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| PathBuf::from("."));
+    
+    let source_jar = workspace_root.join(".local").join("fabric-mods").join("horizon-accel-0.1.0.jar");
+    let dest_jar = mods_dir.join("horizon-accel-0.1.0.jar");
+
+    if source_jar.exists() {
+        fs::copy(&source_jar, &dest_jar).map_err(|e| format!("Failed to copy horizon-accel.jar: {e}"))?;
+        println!("Installed horizon-accel.jar to {}", dest_jar.display());
+    } else {
+        // Try alternative location: target/release/horizon-accel-0.1.0.jar (if built there)
+        let alt_jar = workspace_root.join("horizon-accel-0.1.0.jar");
+        if alt_jar.exists() {
+            fs::copy(&alt_jar, &dest_jar).map_err(|e| format!("Failed to copy horizon-accel.jar: {e}"))?;
+            println!("Installed horizon-accel.jar to {}", dest_jar.display());
+        } else {
+            return Err(format!(
+                "horizon-accel.jar not found at {} or {}. Run `python build_jar.py` in the horizon-accel crate first.",
+                source_jar.display(), alt_jar.display()
+            ));
+        }
+    }
+
+    // Also copy fabric-api if not present (it's a dependency)
+    let fabric_api_source = workspace_root.join(".local").join("maven").join("fabric-api-0.165.0+26.3.jar");
+    let fabric_api_dest = mods_dir.join("fabric-api-0.165.0+26.3.jar");
+    if fabric_api_source.exists() && !fabric_api_dest.exists() {
+        fs::copy(&fabric_api_source, &fabric_api_dest).map_err(|e| format!("Failed to copy fabric-api.jar: {e}"))?;
+        println!("Installed fabric-api.jar to {}", fabric_api_dest.display());
+    }
+
+    // Write config/horizon-accel.json with default settings
+    let config_dir = instance_dir.join("config");
+    fs::create_dir_all(&config_dir).map_err(|e| format!("Failed to create config dir: {e}"))?;
+    let accel_config = config_dir.join("horizon-accel.json");
+    let mut modules = HashMap::new();
+    // Enable all available modules by default
+    modules.insert("chunk_io".to_string(), true);
+    modules.insert("worldgen".to_string(), true);
+    modules.insert("lighting".to_string(), true);
+    modules.insert("collision".to_string(), true);
+    modules.insert("meshing".to_string(), true);
+    modules.insert("pathfinding".to_string(), true);
+    let json = serde_json::to_string_pretty(&serde_json::json!({
+        "enabled": true,
+        "modules": modules,
+        "pinned_version": "0.1.0",
+        "jvm_memory_mb": null,
+        "jvm_args": ""
+    })).map_err(|e| format!("Failed to serialize accel config: {e}"))?;
+    fs::write(&accel_config, json).map_err(|e| format!("Failed to write accel config: {e}"))?;
+    println!("Wrote accel config to {}", accel_config.display());
+
+    Ok(())
+}
+
 /// `1280x720` (or `1280×720`), or `default` for none.
 fn parse_window(text: &str) -> Result<Option<(u32, u32)>, String> {
     let text = text.trim();
@@ -2635,29 +2712,77 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
         InstanceCmd::Create {
             name,
             copy,
-            minecraft: None,
-            ..
-        } => changed(instances::create(&name, copy.as_deref())?),
-        InstanceCmd::Create {
-            name,
-            minecraft: Some(version),
+            kind,
+            minecraft,
             loader,
             loader_version,
-            ..
         } => {
-            let versions = horizon_launcher::minecraft_versions::load()?;
-            let id = &versions.find(&version)?.id;
-            // The loader first: a version it doesn't have makes no instance.
-            let loader = loader
-                .map(|kind| loaders::choose(&kind, id, loader_version.as_deref()))
-                .transpose()?;
-            let made = instances::create_java(&name, id)?;
-            match loader {
-                Some(loader) => changed(instances::edit(&made.id, |m| {
-                    m.java.get_or_insert_with(Default::default).loader = Some(loader)
-                })?),
-                None => changed(made),
-            }
+            let result: Result<(), String> = (|| {
+                match kind.as_deref() {
+                    Some("horizon-fabric") => {
+                        // Horizon-Fabric: pinned to 26.3 with Fabric loader + horizon-accel mod
+                        let versions = horizon_launcher::minecraft_versions::load()?;
+                        let id = "26.3";
+                        if versions.find(id).is_err() {
+                            return Err(format!("Minecraft version {id} not found"));
+                        }
+                        let loader = loaders::choose("fabric", id, None)?;
+                        let made = instances::create_java(&name, id)?;
+                        instances::edit(&made.id, |m| {
+                            let java = m.java.get_or_insert_with(Default::default);
+                            java.loader = Some(loader);
+                            java.accel = Some(instances::AccelSettings {
+                                enabled: true,
+                                modules: std::collections::HashMap::new(),
+                                pinned_version: Some("0.1.0".to_string()),
+                                jvm_memory_mb: None,
+                                jvm_args: String::new(),
+                            });
+                        })?;
+                        // Install horizon-accel mod
+                        install_horizon_accel(&made.id)?;
+                        changed(made);
+                        Ok(())
+                    }
+                    Some("horizon") | None => {
+                        // Default: Horizon instance (no Minecraft version)
+                        let made = instances::create(&name, copy.as_deref())?;
+                        changed(made);
+                        Ok(())
+                    }
+                    Some("vanilla") => {
+                        // Vanilla Minecraft: Java Edition instance (no loader)
+                        let versions = horizon_launcher::minecraft_versions::load()?;
+                        let id = minecraft
+                            .as_deref()
+                            .unwrap_or("latest");
+                        let id = versions.find(id)?.id.clone();
+                        let made = instances::create_java(&name, &id)?;
+                        changed(made);
+                        Ok(())
+                    }
+                    Some("fabric") | Some("quilt") => {
+                        // Fabric or Quilt instance
+                        let versions = horizon_launcher::minecraft_versions::load()?;
+                        let id = minecraft
+                            .as_deref()
+                            .unwrap_or("latest");
+                        let id = versions.find(id)?.id.clone();
+                        let loader_kind = kind.unwrap(); // fabric or quilt
+                        let loader = loaders::choose(&loader_kind, &id, loader_version.as_deref())?;
+                        let made = instances::create_java(&name, &id)?;
+                        instances::edit(&made.id, |m| {
+                            m.java.get_or_insert_with(Default::default).loader = Some(loader)
+                        })?;
+                        changed(made);
+                        Ok(())
+                    }
+                    Some(other) => Err(format!(
+                        "Unknown instance kind {other:?}. Use: horizon, horizon-fabric, vanilla, fabric, quilt"
+                    )),
+                }
+            })();
+            result?;
         }
         InstanceCmd::Loader {
             instance,

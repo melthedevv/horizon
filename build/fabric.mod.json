@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "horizon-accel",
+  "version": "0.1.0",
+  "name": "Horizon Accelerator",
+  "description": "Horizon Rust accelerator modules for Fabric",
+  "authors": [
+    "Horizon"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.horizonlab.accel.HorizonAccelMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "26.3",
+    "fabric-api": "*"
+  },
+  "custom": {
+    "horizon-accel": {
+      "protocol_version": 1,
+      "native_library": "horizon_accel",
+      "manifest_resource": "accel-manifest.json"
+    }
+  }
+}

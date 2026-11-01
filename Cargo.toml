@@ -30,12 +30,7 @@ members = [
     "crates/horizon-shaders",
     "crates/horizon-shader-api",
     "crates/horizon-release-sign",
-    "crates/horizon-fabric-jvm",
-    "crates/horizon-fabric-jni",
-    "crates/horizon-fabric-mapping",
-    "crates/horizon-fabric-loader",
-    "crates/horizon-fabric-mixin",
-    "crates/horizon-fabric-integration",
+    "crates/horizon-accel",
     "xtask",
 ]
 resolver = "2"
